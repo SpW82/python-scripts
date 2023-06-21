@@ -1,11 +1,13 @@
 from cryptography.fernet import Fernet
 import os
+import optparse
+
 
 def unlock(key, path):
-
     """
     Decrypting all files contained in target directory.
-    The same key is hardcoded in both file_enc and file_dec but can be made user defined by uncommenting lines 33 & 34.
+    The same key is hardcoded in both dir_enc_parser and
+    dir_dec_parser but can be, and should be, changed usging the -p or --pth flag.
     ENSURE the correct path is entered.
     """
 
@@ -27,12 +29,28 @@ def unlock(key, path):
             f.write(dec_conts)
             print(f"[+] Decrypted : {f.name}")
 
-def main():
 
-    k = b'DKxZmlu4ExSeJUGfFRSMKUOl0QCpgGKM2cV_KAPt3_8='
-    # k = input("[*] Enter key(decoded): ")
-    # k = k.encode()
-    p = input("[*] Enter path: ")
+def main():
+    parser = optparse.OptionParser("Script to decrypt a target directory")
+    parser.add_option('-p', '--pth', dest='pth', type='str', help='Absolute path of directory to decrypt')
+    parser.add_option('-k', '--key', dest='key', type='str', help='Fernet key, not encoded')
+    (options, args) = parser.parse_args()
+
+    k = 'DKxZmlu4ExSeJUGfFRSMKUOl0QCpgGKM2cV_KAPt3_8='
+    p = ''
+
+    if options.pth is None:
+        print(f'{parser.usage}\nFor decryption enter absolute path of directory to continue')
+        exit(0)
+    else:
+        p = options.pth
+
+    if options.key is None:
+        pass
+    else:
+        k = options.key
+
+    k = k.encode()
     unlock(k, p)
 
 
